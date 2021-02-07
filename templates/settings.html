@@ -1,0 +1,98 @@
+{% set active_page = "settings" %}
+{% include "header.html" %}
+<div class="container p-3">
+    <div class="card">
+        <div class="card-header lead">
+            Settings
+        </div>
+        <div class="card-body">
+            <form method=POST enctype=multipart/form-data action="{{url_for('action')}}">
+                <input type="hidden" name="csrf_token" value={{csrf_token()}}>
+                <table class="table">
+                    <tr>
+                        <td class="lead">
+                            Display Name
+                        </td>
+                        <td>
+                            <input type="text" class="form-control font-weight-light" name="display_name"
+                                {% if current_user.settings.display_name %}
+                                value="{{current_user.settings.display_name}}" {% endif %}
+                                placeholder="Enter a name to be displayed">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="lead">
+                            Theme
+                        </td>
+                        <td>
+                            <select name="theme" id="theme_picker" class="form-control">
+                            {% for theme in data.themes %}
+                            <option value="{{theme}}" {% if current_user.settings.theme == theme %}selected{% endif %}>
+                                {{theme.title()}}
+                            </option>
+
+                            {% endfor %}
+                            </select>
+                            <script>
+                                function get_theme_url(theme) {
+                                    if (theme == "default") {
+                                        return "/static/bootstrap/css/bootstrap.min.css";
+                                    } else {
+                                        return "/static/themes/css/bootstrap." + theme + ".min.css"
+                                    }
+
+                                }
+
+                                $('#theme_picker').on('change', function(){
+                                    var current_theme = $(this).val();
+                                    $('#theme_css').attr('href', get_theme_url(current_theme));
+                                });
+                            </script>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                        </td>
+                    </tr>
+                </table>
+                <button type="submit" name="action" value="update_settings" class="btn btn-primary">
+                    Update Settings
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="card mt-2">
+        <div class="card-header lead">
+            Account
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <tr>
+                    <td class="lead">
+                        Username
+                    </td>
+                    <td>
+                        {{current_user.username}}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="lead">
+                        E-mail
+                    </td>
+                    <td>
+                        {{current_user.email}}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="lead">
+                        Password
+                    </td>
+                    <td>
+                        <a href="{{url_for_security('change_password')}}">Change</a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% include "footer.html" %}

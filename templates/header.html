@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+{% if current_user.is_authenticated and current_user.settings.theme %}
+    {% set theme_name = current_user.settings.theme %}
+{% else %}
+    {% set theme_name = "united" %}
+{% endif %}
+<head>
+    <title>&bull; MyTitle &bull; {% if data and data.title %}{{data.title}} &bull;{% endif %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    {% if theme_name != "default" %}
+    <link id="theme_css" href="/static/themes/css/bootstrap.{{theme_name}}.min.css" rel="stylesheet">
+    {% else %}
+    <link id="theme_css" href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+    <link href="/static/custom/css/sticky-footer.css" rel="stylesheet">
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="/static/js/jquery.js"></script>
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="/static/js/popper.min.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    {% if theme_name != "default" %}
+    <script src="/static/themes/js/bootstrap.{{theme_name}}.min.js"></script>
+    {% endif %}
+
+    <!-- Application Specific -->
+    <!-- <script src="/static/custom/js/path-to-custom-js"></script> -->
+
+    <!-- Latest compiled and minified CSS -->
+    <!-- link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css" -->
+    <link rel="stylesheet" href="/static/plugins/css/bootstrap-select.min.css">
+
+    <!-- Animations for Bootstrap-Notify -->
+    <link rel="stylesheet" href="/static/plugins/css/animate.min.css">
+
+    <!-- FontAwesome -->
+    <!-- link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" -->
+    <link rel="stylesheet" href="/static/fontawesome/css/all.css">
+
+    <!-- Toggle Checkbox Buttons -->
+    <!-- https://gitbrent.github.io/bootstrap4-toggle/ -->
+    <!-- link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet" -->
+    <!-- script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script -->
+    <link rel="stylesheet" href="/static/plugins/css/bootstrap4-toggle.min.css">
+    <script src="/static/plugins/js/bootstrap4-toggle.min.js"></script>
+
+    <!-- Bootstrap Table -->
+    <link rel="stylesheet" href="/static/plugins/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="/static/plugins/bootstrap-table/extensions/sticky-header/bootstrap-table-sticky-header.css">
+
+    <!-- Sanscript -->
+    <script src="/static/plugins/js/sanscript.js"></script>
+
+    <style>
+        .table {
+            padding-top: 0px;
+            margin-top: 0px;
+        }
+
+        /* Remove the top border when a table is missing the header */
+        .table>tbody>tr:first-child>td {
+            border-top: none;
+        }
+
+        .table>tbody>tr:first-child>th {
+            border-top: none;
+        }
+
+        .detail-view {
+            padding: 0px;
+        }
+        .detail-view>td {
+            padding: 0px;
+        }
+
+        .scroll {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .scroll-small {
+            max-height: 35vh;
+            overflow-y: auto;
+        }
+
+        .dropdown-menu {
+            max-width: 100%;
+            overflow: clip;
+        }
+
+        .animated {
+			-webkit-animation-iteration-count: infinite;
+            animation-iteration-count: infinite;
+		}
+    </style>
+</head>
+
+<body class="font-weight-light">
+    {% set navigation_bar = {
+        'home': ('show_home', 'Home'),
+    }-%}
+    {% set user_navigation = {
+        'settings': ('show_settings', 'Settings')
+    }-%}
+    {% set admin_navigation = {
+        'admin': ('show_admin', 'Admin')
+    }-%}
+
+    {% if current_user.is_authenticated %}
+        {% if current_user.settings.display_name %}
+            {% set current_user_name = current_user.settings.display_name %}
+        {% else %}
+            {% set current_user_name = current_user.email %}
+        {% endif %}
+
+        {% set _dummy = navigation_bar.update(user_navigation) %}
+
+        {% if current_user.has_role('admin') %}
+            {% set _dummy = navigation_bar.update(admin_navigation) %}
+        {% endif %}
+
+        {% set _dummy = navigation_bar.update({
+            'logout': ('security.logout', 'Logout (' + current_user_name + ')')
+        })-%}
+    {% else %}
+        {% set _dummy = navigation_bar.update({
+            'login': ('security.login', 'Login')
+        })-%}
+    {% endif %}
+
+    {% set active_page = active_page|default('home') -%}
+
+    <ul class="nav nav-tabs bg-light">
+        <li class="nav-item col-sm lead">
+            <span class="nav-link text-secondary font-weight-light disabled">MyHeader</span>
+        </li>
+        {% for id in navigation_bar %}
+        {% set func = navigation_bar[id][0] %}
+        {% set caption = navigation_bar[id][1] %}
+        <li class="nav-item lead">
+            <a class="nav-link {% if id == active_page %}active{% endif %}" href="{{url_for(func)}}">{{caption}}</a>
+        </li>
+        {% endfor %}
+
+    </ul>
+    {% include "messages.html" %}

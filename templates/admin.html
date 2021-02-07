@@ -1,0 +1,58 @@
+{% set active_page = "admin" %}
+{% include "header.html" %}
+<div class="container p-3">
+    <!-- User Administration to be implemented. -->
+    {% if current_user.has_role('owner') %}
+    <!-- PythonAnywhere -->
+    <div class="card mt-2">
+        <div class="card-header lead">
+            Application
+        </div>
+        <div class="card-body">
+            <form method=POST enctype=multipart/form-data action="{{url_for('action')}}">
+                <input type="hidden" name="csrf_token" value={{csrf_token()}}>
+
+                <button type="submit" name="action" value="application_info" class="btn btn-primary disabled">
+                    info
+                </button>
+                <button type="submit" name="action" value="application_update" class="btn btn-warning disabled">
+                    update
+                </button>
+                <!-- reload button not actually interacting with form -->
+                <button type="button" id="application_reload" class="btn btn-success disabled">
+                    reload
+                </button>
+            </form>
+            <script>
+            $(document).ready(function(){
+                $("#application_reload").click(function(){
+                    $.ajax({
+                        type: "POST",
+                        url: "{{url_for('action')}}",
+                        data: {
+                            "action": "application_reload"
+                        },
+                        success: function(result) {
+                            location.reload();
+                        },
+                        error: function(result) {
+                            location.reload();
+                        },
+                    })
+
+                });
+            });
+            </script>
+        </div>
+    </div>
+
+    {% if data.result %}
+    <div class="card bg-dark">
+        <div class="card-body">
+            <pre class="text-white pre-scrollable">{{data.result}}</pre>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% include "footer.html" %}

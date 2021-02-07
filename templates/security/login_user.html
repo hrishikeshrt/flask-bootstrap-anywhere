@@ -1,0 +1,39 @@
+{% set active_page = "login" %}
+{% from "macros.html" import render_field_with_errors, render_field, render_field_errors %}
+{% include "header.html" %}
+
+<div class="container p-3 lead">
+    <div class="card">
+        <div class="card-header lead">
+            {{ _('Login') }}
+        </div>
+        <div class="card-body">
+            <form method=POST enctype=multipart/form-data action="{{ url_for_security('login') }}" name="login_user_form">
+                {{ login_user_form.hidden_tag() }}
+                {{ render_field_errors(login_user_form.csrf_token) }}
+                <div class="form-group">
+                    {{ render_field_with_errors(login_user_form.email, class_="form-control font-weight-light", placeholder="Username or Email") }}
+                </div>
+                <div class="form-group">
+                    {{ render_field_with_errors(login_user_form.password, class_="form-control font-weight-light", placeholder="Password") }}
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="remember" name="remember" value="y">
+                    <label for="remember">Remember Me</label>
+                </div>
+                {% if security.recoverable %}
+                <div class="form-group">
+                    <a href="{{ url_for_security('forgot_password') }}">{{ _('Forgot password?') }}</a>
+                </div>
+                {% endif %}
+
+                {{ render_field(login_user_form.submit, class_="btn btn-primary") }}
+                <a href="{{url_for_security('register')}}" class="float-right">
+                    Don't have an account?
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include "footer.html" %}

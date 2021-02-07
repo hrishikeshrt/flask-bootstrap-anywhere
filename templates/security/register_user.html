@@ -1,0 +1,37 @@
+{% set active_page = "login" %}
+{% from "macros.html" import render_field_with_errors, render_field, render_field_errors %}
+{% include "header.html" %}
+
+<div class="container p-3 lead">
+    <div class="card">
+        <div class="card-header lead">
+            {{ _('Register') }}
+        </div>
+        <div class="card-body">
+            <form enctype=multipart/form-data  method="POST" action="{{ url_for_security('register') }}" name="register_user_form">
+                {{ register_user_form.hidden_tag() }}
+                <div class="form-group">
+                    {{ render_field_with_errors(register_user_form.username, class_="form-control font-weight-light", placeholder="Username") }}
+                </div>
+                <div class="form-group">
+                    {{ render_field_with_errors(register_user_form.email, class_="form-control font-weight-light", placeholder="Email") }}
+                </div>
+                <div class="form-group">
+                    {{ render_field_with_errors(register_user_form.password, class_="form-control font-weight-light", placeholder="Password") }}
+                </div>
+                {% if register_user_form.password_confirm %}
+                <div class="form-group">
+                    {{ render_field_with_errors(register_user_form.password_confirm, class_="form-control font-weight-light", placeholder="Confirm Password") }}
+                </div>
+                {% endif %}
+
+                {{ render_field(register_user_form.submit, class_="btn btn-primary", value="Register") }}
+                <a href="{{ url_for_security('login')}}" class="float-right">
+                    Already have an account?
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include "footer.html" %}

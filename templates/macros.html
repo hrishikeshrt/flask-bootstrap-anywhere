@@ -1,0 +1,18 @@
+{% macro render_field_with_errors(field) %}
+    {{ field.label }} {{ field(**kwargs)|safe }}
+    {{ render_field_errors(field) }}
+{% endmacro %}
+
+{% macro render_field(field) %}
+  {{ field(**kwargs)|safe }}
+{% endmacro %}
+
+{% macro render_field_errors(field) %}
+    {% if field and field.errors %}
+        <ul class="list-unstyled">
+        {% for error in field.errors %}
+        <li class="p-1 small font-weight-bold text-danger">{{ error }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}
