@@ -52,9 +52,6 @@
     <link rel="stylesheet" href="/static/plugins/bootstrap-table/bootstrap-table.min.css">
     <link rel="stylesheet" href="/static/plugins/bootstrap-table/extensions/sticky-header/bootstrap-table-sticky-header.css">
 
-    <!-- Sanscript -->
-    <script src="/static/plugins/js/sanscript.js"></script>
-
     <style>
         .table {
             padding-top: 0px;
@@ -68,13 +65,6 @@
 
         .table>tbody>tr:first-child>th {
             border-top: none;
-        }
-
-        .detail-view {
-            padding: 0px;
-        }
-        .detail-view>td {
-            padding: 0px;
         }
 
         .scroll {
@@ -114,7 +104,7 @@
         {% if current_user.settings.display_name %}
             {% set current_user_name = current_user.settings.display_name %}
         {% else %}
-            {% set current_user_name = current_user.email %}
+            {% set current_user_name = current_user.username %}
         {% endif %}
 
         {% set _dummy = navigation_bar.update(user_navigation) %}

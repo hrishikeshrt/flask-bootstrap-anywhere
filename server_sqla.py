@@ -129,6 +129,7 @@ def _after_authentication_hook(sender, user, **extra):
     pass
 
 ###############################################################################
+# Views
 
 
 @webapp.route("/")
@@ -146,6 +147,10 @@ def show_admin():
     data = {}
     data['title'] = 'Admin'
     data['roles'] = [role.name for role in current_user.roles]
+    admin_result = session.get('admin_result', None)
+    if admin_result:
+        data['result'] = admin_result
+        del session['admin_result']
     return render_template('admin.html', data=data, constants=CONSTANTS)
 
 
@@ -155,7 +160,6 @@ def show_settings():
     theme_files = glob.glob(
         os.path.join(app.dir, 'static', 'themes', 'css', 'bootstrap.*.min.css')
     )
-    print(app.dir, theme_files)
     themes = sorted([os.path.basename(theme).split('.')[1]
                      for theme in theme_files])
 
