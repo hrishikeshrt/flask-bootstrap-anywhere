@@ -107,7 +107,7 @@ babel = Babel(webapp)
 
 @webapp.before_first_request
 def init_database():
-    """Initiate database and create adminn user"""
+    """Initiate database and create admin user"""
     db.create_all()
     for role_definition in app.role_definitions:
         name = role_definition['name']
@@ -160,7 +160,15 @@ def show_home():
 def show_admin():
     data = {}
     data['title'] = 'Admin'
-    data['roles'] = [role.name for role in current_user.roles]
+
+    user_level = max([role.level for role in current_user.roles])
+    user_query = user_datastore.user_model.query
+    role_query = user_datastore.role_model.query
+    data['users'] = [user.username for user in user_query.all()]
+    data['roles'] = [
+        role.name for role in role_query.all() if role.level < user_level
+    ]
+
     admin_result = session.get('admin_result', None)
     if admin_result:
         data['result'] = admin_result
