@@ -1,7 +1,45 @@
 {% set active_page = "admin" %}
 {% include "header.html" %}
 <div class="container p-3">
-    <!-- User Administration to be implemented. -->
+    <div class="card">
+        <div class="card-header lead">
+            Users
+        </div>
+        <div class="card-body">
+            <form method=POST enctype=multipart/form-data action="{{url_for('action')}}">
+                <input type="hidden" name="csrf_token" value={{csrf_token()}}>
+                <div class="form-group row">
+                    <label class="col-sm-1 col-form-label" for="target_user">User</label>
+                    <div class="col-sm-3 my-auto">
+                        <select class="lead m-1" name="target_user" id="target_user" data-live-search="true">
+                            {% for user in data.users %}
+                            <option value="{{user}}">{{user}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <label class="col-sm-1 col-form-label" for="target_role">Role</label>
+                    <div class="col-sm-3 my-auto">
+                        <select class="lead m-1" name="target_role" id="target_role" data-live-search="true">
+                            {% for role in data.roles %}
+                            <option value="{{role}}">{{role}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm my-auto">
+                        <button type="submit" name="action" value="user_role_add"
+                            class="btn btn-success disabled m-1">
+                            Add
+                        </button>
+                        <button type="submit" name="action" value="user_role_remove"
+                            class="btn btn-danger disabled m-1">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {% if current_user.has_role('owner') %}
     <!-- PythonAnywhere -->
     <div class="card mt-2">

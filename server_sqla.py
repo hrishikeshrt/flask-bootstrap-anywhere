@@ -8,6 +8,7 @@ Created on Wed Dec 30 18:28:31 2020
 
 ###############################################################################
 
+import re
 import os
 import glob
 import json
@@ -19,6 +20,8 @@ from flask import (Flask, render_template, request, redirect, flash,
 from flask_security import (Security, auth_required, roles_required,
                             hash_password, current_user, user_registered,
                             user_authenticated)
+from flask_security.utils import uia_email_mapper
+from flask_babelex import Babel
 from flask_wtf import CSRFProtect
 from flask_mail import Mail
 from flask_migrate import Migrate
@@ -30,6 +33,15 @@ import constants
 ###############################################################################
 
 CONSTANTS = vars(constants)
+
+###############################################################################
+# UIA Mapper
+
+
+def uia_username_mapper(identity):
+    pattern = r'^(?!_$)(?![0-9_.])(?!.*[_.]{2})[a-zA-Z0-9_.]+(?<![.])$'
+    return identity if re.match(pattern, identity) else None
+
 
 ###############################################################################
 # Flask Application
@@ -55,7 +67,10 @@ webapp.config['WTF_CSRF_TIME_LIMIT'] = None
 
 webapp.config['SECURITY_REGISTERABLE'] = True
 webapp.config['SECURITY_SEND_REGISTER_EMAIL'] = app.smtp_enabled
-webapp.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['email', 'username']
+webapp.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = [
+    {'email': {'mapper': uia_email_mapper}},
+    {'username': {'mapper': uia_username_mapper}}
+]
 webapp.config['SECURITY_RECOVERABLE'] = app.smtp_enabled
 webapp.config['SECURITY_CHANGEABLE'] = True
 webapp.config['SECURITY_TRACKABLE'] = True
@@ -84,6 +99,7 @@ security = Security(webapp, user_datastore,
                     register_form=CustomRegisterForm)
 mail = Mail(webapp)
 migrate = Migrate(webapp, db)
+babel = Babel(webapp)
 
 ###############################################################################
 # Hooks
@@ -93,26 +109,24 @@ migrate = Migrate(webapp, db)
 def init_database():
     """Initiate database and create adminn user"""
     db.create_all()
-    app.roles = {}
     for role_definition in app.role_definitions:
         name = role_definition['name']
         description = role_definition['description']
         permissions = role_definition['permissions']
         level = role_definition['level']
-        role = user_datastore.find_or_create_role(
+        user_datastore.find_or_create_role(
             name=name,
             description=description,
             level=level,
             permissions=permissions
         )
-        app.roles[name] = role
 
     if not user_datastore.find_user(username=app.admin['username']):
         user_datastore.create_user(
             username=app.admin['username'],
             email=app.admin['email'],
             password=hash_password(app.admin['password']),
-            roles=[app.roles['owner'], app.roles['admin'], app.roles['member']]
+            roles=['owner', 'admin', 'member']
         )
     db.session.commit()
 
@@ -120,7 +134,7 @@ def init_database():
 @user_registered.connect_via(webapp)
 def assign_default_roles(sender, user, **extra):
     """Assign member role to users after successful registration"""
-    user_datastore.add_role_to_user(user, app.roles['member'])
+    user_datastore.add_role_to_user(user, 'member')
     db.session.commit()
 
 
@@ -187,7 +201,7 @@ def action():
     ]
 
     admin_actions = [
-        'update_user_role'
+        'user_role_add', 'user_role_remove'
     ]
 
     if action in owner_actions and not current_user.has_role('owner'):
@@ -252,22 +266,41 @@ def action():
     # ----------------------------------------------------------------------- #
     # Manage User Role
 
-    if action == 'update_user_role':
+    if action in ['user_role_add', 'user_role_remove']:
         target_user = request.form['target_user']
         target_role = request.form['target_role']
+        target_action = action.split('_')[-1]
 
         _user = user_datastore.find_user(username=target_user)
-        _role = app.roles[target_role]
+        _role = user_datastore.find_role(target_role)
 
         user_level = max([role.level for role in current_user.roles])
         target_level = max([role.level for role in _user.roles])
+
+        valid_update = True
         if _user == current_user:
-            flash("You cannot modify your own role.")
-        elif user_level <= target_level:
-            flash(f"You cannot modify role '{target_role}'.", "danger")
+            if _role.level == user_level:
+                flash("You cannot modify your highest role.")
+                valid_update = False
         else:
-            user_datastore.add_role_to_user(_user, _role)
-            flash(f"Updated role of user '{target_user}' to '{target_role}'.")
+            if user_level <= target_level:
+                flash(f"You cannot modify '{target_user}'.", "danger")
+                valid_update = False
+
+        if valid_update:
+            if target_action == 'add':
+                status = user_datastore.add_role_to_user(_user, _role)
+                message = "Added role '{}' to user '{}'."
+            if target_action == 'remove':
+                status = user_datastore.remove_role_from_user(_user, _role)
+                message = "Removed role '{}' from user '{}'."
+
+            if status:
+                db.session.commit()
+                flash(message.format(target_role, target_user), "info")
+            else:
+                flash("No changes were made.")
+
         return redirect(request.referrer)
 
     # ----------------------------------------------------------------------- #
