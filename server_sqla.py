@@ -12,6 +12,7 @@ import re
 import os
 import glob
 import json
+import datetime
 
 import git
 import requests
@@ -143,6 +144,17 @@ def _after_authentication_hook(sender, user, **extra):
     pass
 
 ###############################################################################
+# Global Context
+
+
+@webapp.context_processor
+def inject_global_constants():
+    return {
+        'now': datetime.datetime.utcnow(),
+        'constants': CONSTANTS
+    }
+
+###############################################################################
 # Views
 
 
@@ -151,7 +163,7 @@ def _after_authentication_hook(sender, user, **extra):
 def show_home():
     data = {}
     data['title'] = 'Home'
-    return render_template('home.html', data=data, constants=CONSTANTS)
+    return render_template('home.html', data=data)
 
 
 @webapp.route("/admin", strict_slashes=False)
@@ -173,7 +185,7 @@ def show_admin():
     if admin_result:
         data['result'] = admin_result
         del session['admin_result']
-    return render_template('admin.html', data=data, constants=CONSTANTS)
+    return render_template('admin.html', data=data)
 
 
 @webapp.route("/settings", strict_slashes=False)
@@ -189,7 +201,7 @@ def show_settings():
     data['title'] = 'Settings'
     data['themes'] = ['default'] + themes
 
-    return render_template('settings.html', data=data, constants=CONSTANTS)
+    return render_template('settings.html', data=data)
 
 
 @webapp.route("/action", methods=["POST"], strict_slashes=False)
