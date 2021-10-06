@@ -87,9 +87,9 @@ In `settings.py`, set `USE_SQLITE` to `False` and `USE_MYSQL` to `True`.
 
 Support for PostgreSQL, although not explicitly added, is easy to figure out.
 It can be achieved in a similar manner to MySQL support by installing the necessary driver
-and using the proper `database_uri` for `MySQLAlchemy`.
+and using the proper `database_uri` for `SQLAlchemy`.
 
-MongoDB support will be added soon, although it's not too difficult to figure it out.
+MongoDB support may be added in the future, although it's not too difficult to figure it out.
 
 ### Mail
 

@@ -1,6 +1,6 @@
 {% set active_page = "admin" %}
 {% include "header.html" %}
-<div class="container p-3">
+<div id="acp" class="container py-3">
     <div class="card">
         <div class="card-header lead">
             Users
@@ -11,7 +11,7 @@
                 <div class="form-group row">
                     <label class="col-sm-1 col-form-label" for="target_user">User</label>
                     <div class="col-sm-3 my-auto">
-                        <select class="lead m-1" name="target_user" id="target_user" data-live-search="true">
+                        <select class="lead m-1 selectpicker" name="target_user" id="target_user" data-live-search="true">
                             {% for user in data.users %}
                             <option value="{{user}}">{{user}}</option>
                             {% endfor %}
@@ -19,15 +19,14 @@
                     </div>
                     <label class="col-sm-1 col-form-label" for="target_role">Role</label>
                     <div class="col-sm-3 my-auto">
-                        <select class="lead m-1" name="target_role" id="target_role" data-live-search="true">
+                        <select class="lead m-1 selectpicker" name="target_role" id="target_role" data-live-search="true">
                             {% for role in data.roles %}
                             <option value="{{role}}">{{role}}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-sm my-auto">
-                        <button type="submit" name="action" value="user_role_add"
-                            class="btn btn-success disabled m-1">
+                        <button type="submit" name="action" value="user_role_add" class="btn btn-success disabled m-1">
                             Add
                         </button>
                         <button type="submit" name="action" value="user_role_remove"
@@ -62,8 +61,8 @@
                 </button>
             </form>
             <script>
-            $(document).ready(function(){
-                $("#application_reload").click(function(){
+            $(document).ready(function() {
+                $("#application_reload").click(function() {
                     $.ajax({
                         type: "POST",
                         url: "{{url_for('action')}}",

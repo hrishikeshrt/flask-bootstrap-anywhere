@@ -6,52 +6,55 @@
     {% set theme_name = "united" %}
 {% endif %}
 <head>
-    <title>&bull; MyTitle &bull; {% if data and data.title %}{{data.title}} &bull;{% endif %}</title>
+    <title>&bull; {{title}} &bull; {% if data and data.title %}{{data.title}} &bull;{% endif %}</title>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <!-- Bootstrap CSS -->
     {% if theme_name != "default" %}
-    <link id="theme_css" href="/static/themes/css/bootstrap.{{theme_name}}.min.css" rel="stylesheet">
+    <link rel="stylesheet" id="theme_css" href="{{url_for('static', filename='themes/css/bootstrap.' + theme_name + '.min.css')}}">
     {% else %}
-    <link id="theme_css" href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" id="theme_css" href="{{url_for('static', filename='bootstrap/css/bootstrap.min.css')}}">
     {% endif %}
-    <link href="/static/custom/css/sticky-footer.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{url_for('static', filename='custom/css/sticky-footer.css')}}">
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="/static/js/jquery.js"></script>
+    <script src="{{url_for('static', filename='js/jquery.js')}}"></script>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="/static/js/popper.min.js"></script>
-    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
-    {% if theme_name != "default" %}
-    <script src="/static/themes/js/bootstrap.{{theme_name}}.min.js"></script>
+    <script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
+    <script src="{{url_for('static', filename='bootstrap/js/bootstrap.min.js')}}"></script>
+    {% if theme_name != "default" and theme_name in themes_js %}
+    <script src="{{url_for('static', filename='themes/js/bootstrap.'+ theme_name + '.min.js')}}"></script>
     {% endif %}
 
     <!-- Application Specific -->
-    <!-- <script src="/static/custom/js/path-to-custom-js"></script> -->
+    <!-- <script src="{{url_for('static', filename='custom/js/path-to-custom-js')}}"></script> -->
+
+    <script src="{{url_for('static', filename='plugins/js/bs-custom-file-input.min.js')}}"></script>
 
     <!-- Latest compiled and minified CSS -->
     <!-- link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css" -->
-    <link rel="stylesheet" href="/static/plugins/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/css/bootstrap-select.min.css')}}">
 
     <!-- Animations for Bootstrap-Notify -->
-    <link rel="stylesheet" href="/static/plugins/css/animate.min.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/css/animate.min.css')}}">
 
     <!-- FontAwesome -->
     <!-- link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" -->
-    <link rel="stylesheet" href="/static/fontawesome/css/all.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='fontawesome/css/all.css')}}">
 
     <!-- Toggle Checkbox Buttons -->
     <!-- https://gitbrent.github.io/bootstrap4-toggle/ -->
     <!-- link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet" -->
     <!-- script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script -->
-    <link rel="stylesheet" href="/static/plugins/css/bootstrap4-toggle.min.css">
-    <script src="/static/plugins/js/bootstrap4-toggle.min.js"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/css/bootstrap4-toggle.min.css')}}">
+    <script src="{{url_for('static', filename='plugins/js/bootstrap4-toggle.min.js')}}"></script>
 
     <!-- Bootstrap Table -->
-    <link rel="stylesheet" href="/static/plugins/bootstrap-table/bootstrap-table.min.css">
-    <link rel="stylesheet" href="/static/plugins/bootstrap-table/extensions/sticky-header/bootstrap-table-sticky-header.css">
-
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/bootstrap-table/bootstrap-table.min.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/bootstrap-table/extensions/sticky-header/bootstrap-table-sticky-header.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/bootstrap-table/extensions/page-jump-to/bootstrap-table-page-jump-to.css')}}">
     <style>
         .table {
             padding-top: 0px;
@@ -68,7 +71,12 @@
         }
 
         .scroll {
-            max-height: 60vh;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        .scroll-medium {
+            max-height: 55vh;
             overflow-y: auto;
         }
 
@@ -126,7 +134,7 @@
 
     <ul class="nav nav-tabs bg-light">
         <li class="nav-item col-sm lead">
-            <span class="nav-link text-secondary font-weight-light disabled">MyHeader</span>
+            <span class="nav-link text-secondary disabled">{{title}}</span>
         </li>
         {% for id in navigation_bar %}
         {% set func = navigation_bar[id][0] %}

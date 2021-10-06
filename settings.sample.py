@@ -13,10 +13,22 @@ from configuration import Configuration
 
 ###############################################################################
 
+DEBUG = False
+
 APP_NAME = 'MyFlaskWebApp'
-HOME_DIR = os.path.expanduser('~')
-APP_DIR = os.path.join(HOME_DIR, 'git', 'flask-webapp')
+APP_TITLE = 'MyHeader'
+
+APP_DIR = os.path.dirname(os.path.realpath(__file__))
 LOG_FILE = os.path.join(APP_DIR, 'flask.log')
+
+# DB_DIR is used for specifying directory containing SQLite3 database
+
+DB_DIR = 'db'
+DATA_DIR = 'data'
+
+# --------------------------------------------------------------------------- #
+
+APPLICATION_CONFIG = {}
 
 # --------------------------------------------------------------------------- #
 # Security
@@ -31,6 +43,7 @@ SECURITY_PASSWORD_SALT = os.environ.get(
 )
 
 # --------------------------------------------------------------------------- #
+# First User
 
 ADMIN_USER = os.environ.get('ADMIN_USER', 'admin')
 ADMIN_PASS = os.environ.get('ADMIN_PASS', 'admin')
@@ -98,7 +111,7 @@ ROLES = [
         'name': 'member',
         'level': 5,
         'description': 'Member',
-        'permissions': ['login', 'change_password', 'view_ucp']
+        'permissions': ['view_ucp']
     },
     {
         'name': 'admin',
@@ -110,7 +123,7 @@ ROLES = [
         'name': 'owner',
         'level': 1000,
         'description': 'Owner',
-        'permissions': ['remove_admin']
+        'permissions': ['view_acp', 'remove_admin']
     },
 ]
 
@@ -119,10 +132,17 @@ ROLES = [
 
 app = Configuration()
 app.name = APP_NAME
+app.title = APP_TITLE
+app.debug = DEBUG
+
+# Config
+app.config = APPLICATION_CONFIG
 
 # Paths
-
 app.dir = APP_DIR
+app.db_dir = os.path.join(APP_DIR, DB_DIR)
+app.data_dir = os.path.join(APP_DIR, DATA_DIR)
+
 app.log_file = LOG_FILE
 
 # Security
@@ -196,7 +216,7 @@ if USE_MYSQL:
 if USE_SQLITE:
     app.sqla = {
         'database_uri': (
-            f'sqlite:///{SQLITE_DATABASE}'
+            f'sqlite:///{os.path.join(app.db_dir, SQLITE_DATABASE)}'
         )
     }
 

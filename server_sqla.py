@@ -1,23 +1,48 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Dec 30 18:28:31 2020
+Generic Flask Server
 
-@author: Hrishikesh Terdalkar
+Deployment
+----------
+
+1. Using Flask-Run
+
+```
+$ export FLASK_APP="server:webapp"
+$ flask run
+```
+
+2. Using gunicorn
+
+```
+$ gunicorn -b host:port server:webapp
+```
+
+3. Direct (dev only)
+
+```
+$ python server.py
+```
 """
+
+__author__ = "Hrishikesh Terdalkar"
+__copyright__ = "Copyright (C) 2020-2021 Hrishikesh Terdalkar"
 
 ###############################################################################
 
-import re
 import os
+import re
 import glob
 import json
+import logging
+import datetime
 
 import git
 import requests
-from flask import (Flask, render_template, request, redirect, flash,
-                   session, Response)
-from flask_security import (Security, auth_required, roles_required,
+from flask import (Flask, render_template, redirect,
+                   request, flash, session, Response)
+from flask_security import (Security, auth_required, permissions_required,
                             hash_password, current_user, user_registered,
                             user_authenticated)
 from flask_security.utils import uia_email_mapper
@@ -32,7 +57,18 @@ import constants
 
 ###############################################################################
 
-CONSTANTS = vars(constants)
+logging.basicConfig(format='[%(asctime)s] %(name)s %(levelname)s: %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    level=logging.INFO,
+                    handlers=[logging.FileHandler(app.log_file),
+                              logging.StreamHandler()])
+
+###############################################################################
+
+required_dirs = [app.db_dir]
+
+for required_dir in required_dirs:
+    os.makedirs(required_dir, exist_ok=True)
 
 ###############################################################################
 # UIA Mapper
@@ -46,14 +82,16 @@ def uia_username_mapper(identity):
 ###############################################################################
 # Flask Application
 
-webapp = Flask(app.name)
-webapp.config['DEBUG'] = True
+webapp = Flask(app.name, static_folder='static')
+webapp.config['DEBUG'] = app.debug
 
 webapp.config['SECRET_KEY'] = app.secret_key
 webapp.config['SECURITY_PASSWORD_SALT'] = app.security_password_salt
 webapp.config['JSON_AS_ASCII'] = False
+webapp.config['JSON_SORT_KEYS'] = False
 
 # SQLAlchemy Config
+webapp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 webapp.config['SQLALCHEMY_DATABASE_URI'] = app.sqla['database_uri']
 webapp.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     "pool_pre_ping": True,
@@ -71,9 +109,16 @@ webapp.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = [
     {'email': {'mapper': uia_email_mapper}},
     {'username': {'mapper': uia_username_mapper}}
 ]
+
 webapp.config['SECURITY_RECOVERABLE'] = app.smtp_enabled
 webapp.config['SECURITY_CHANGEABLE'] = True
 webapp.config['SECURITY_TRACKABLE'] = True
+# NOTE: SECURITY_USERNAME_ still buggy in Flask-Security-Too (4.1.0)
+# Exercise caution before enabling the following two options
+# webapp.config['SECURITY_USERNAME_ENABLE'] = True
+# webapp.config['SECURITY_USERNAME_REQUIRED'] = True
+webapp.config['SECURITY_POST_LOGIN_VIEW'] = 'show_home'
+webapp.config['SECURITY_POST_LOGOUT_VIEW'] = 'show_home'
 
 ###############################################################################
 # Mail Configuration
@@ -87,6 +132,7 @@ if app.smtp_enabled:
     webapp.config['MAIL_USE_SSL'] = app.smtp['use_ssl']
     webapp.config['MAIL_USE_TLS'] = app.smtp['use_tls']
     webapp.config['MAIL_PORT'] = app.smtp['port']
+    webapp.config['MAIL_DEBUG'] = True
 
 ###############################################################################
 # Initialize standard Flask extensions
@@ -109,7 +155,10 @@ babel = Babel(webapp)
 def init_database():
     """Initiate database and create admin user"""
     db.create_all()
-    for role_definition in app.role_definitions:
+    role_definitions = sorted(app.role_definitions,
+                              key=lambda x: x['level'],
+                              reverse=True)
+    for role_definition in role_definitions:
         name = role_definition['name']
         description = role_definition['description']
         permissions = role_definition['permissions']
@@ -143,58 +192,85 @@ def _after_authentication_hook(sender, user, **extra):
     pass
 
 ###############################################################################
+# Global Context
+
+
+@webapp.context_processor
+def inject_global_constants():
+    theme_files = glob.glob(
+        os.path.join(app.dir, 'static', 'themes', 'css', 'bootstrap.*.min.css')
+    )
+    theme_js_files = glob.glob(
+        os.path.join(app.dir, 'static', 'themes', 'js', 'bootstrap.*.min.js')
+    )
+    themes = sorted([os.path.basename(theme).split('.')[1]
+                     for theme in theme_files])
+    themes_js = sorted([os.path.basename(theme).split('.')[1]
+                        for theme in theme_js_files])
+
+    return {
+        'title': app.title,
+        'now': datetime.datetime.utcnow(),
+        'constants': vars(constants),
+        'themes': themes,
+        'themes_js': themes_js,
+        'config': app.config
+    }
+
+###############################################################################
 # Views
 
 
-@webapp.route("/")
-@auth_required()
-def show_home():
-    data = {}
-    data['title'] = 'Home'
-    return render_template('home.html', data=data, constants=CONSTANTS)
-
-
 @webapp.route("/admin", strict_slashes=False)
-@roles_required('admin')
+@permissions_required('view_acp')
 @auth_required()
 def show_admin():
     data = {}
     data['title'] = 'Admin'
 
     user_level = max([role.level for role in current_user.roles])
-    user_query = user_datastore.user_model.query
-    role_query = user_datastore.role_model.query
+    user_model = user_datastore.user_model
+    role_model = user_datastore.role_model
+    user_query = user_model.query
+    role_query = role_model.query
+
     data['users'] = [user.username for user in user_query.all()]
     data['roles'] = [
-        role.name for role in role_query.all() if role.level < user_level
+        role.name
+        for role in role_query.order_by(role_model.level).all()
+        if role.level < user_level
     ]
 
     admin_result = session.get('admin_result', None)
     if admin_result:
         data['result'] = admin_result
         del session['admin_result']
-    return render_template('admin.html', data=data, constants=CONSTANTS)
+    return render_template('admin.html', data=data)
 
 
 @webapp.route("/settings", strict_slashes=False)
+@permissions_required('view_ucp')
 @auth_required()
 def show_settings():
-    theme_files = glob.glob(
-        os.path.join(app.dir, 'static', 'themes', 'css', 'bootstrap.*.min.css')
-    )
-    themes = sorted([os.path.basename(theme).split('.')[1]
-                     for theme in theme_files])
-
     data = {}
     data['title'] = 'Settings'
-    data['themes'] = ['default'] + themes
+    return render_template('settings.html', data=data)
 
-    return render_template('settings.html', data=data, constants=CONSTANTS)
+
+@webapp.route("/", strict_slashes=False)
+@auth_required()
+def show_home():
+    data = {}
+    data['title'] = 'Home'
+    return render_template('home.html', data=data)
+
+###############################################################################
 
 
 @webapp.route("/action", methods=["POST"], strict_slashes=False)
 @auth_required()
 def action():
+    status = False
     try:
         action = request.form['action']
     except KeyError:
@@ -204,24 +280,30 @@ def action():
     # ----------------------------------------------------------------------- #
     # Admin Actions
 
-    owner_actions = [
-        'application_info', 'application_update', 'application_reload'
+    role_actions = {
+        'owner': [
+            'application_info', 'application_update', 'application_reload'
+        ],
+        'admin': [
+            'user_role_add', 'user_role_remove',
+        ]
+    }
+    valid_actions = [
+        action for actions in role_actions.values() for action in actions
     ]
 
-    admin_actions = [
-        'user_role_add', 'user_role_remove'
-    ]
-
-    if action in owner_actions and not current_user.has_role('owner'):
-        flash("You are not authorized to perform that action.", "danger")
+    if action not in valid_actions:
+        flash("Invalid action.")
         return redirect(request.referrer)
 
-    if action in admin_actions and not current_user.has_role('admin'):
-        flash("You are not authorized to perform that action.", "danger")
-        return redirect(request.referrer)
+    for role, actions in role_actions.items():
+        if action in actions and not current_user.has_role(role):
+            flash("You are not authorized to perform that action.", "danger")
+            return redirect(request.referrer)
 
     # ----------------------------------------------------------------------- #
     # Show Application Information
+
     if action in [
         'application_info', 'application_update', 'application_reload'
     ] and not app.pa_enabled:
