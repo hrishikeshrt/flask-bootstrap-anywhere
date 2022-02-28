@@ -209,12 +209,14 @@ def inject_global_constants():
                         for theme in theme_js_files])
 
     return {
-        'title': app.title,
-        'now': datetime.datetime.utcnow(),
-        'constants': vars(constants),
-        'themes': themes,
-        'themes_js': themes_js,
-        'config': app.config
+        "title": app.title,
+        "author": app.author,
+        "copyright_begin_year": app.year,
+        "now": datetime.datetime.utcnow(),
+        "constants": vars(constants),
+        "themes": themes,
+        "themes_js": themes_js,
+        "config": app.config,
     }
 
 ###############################################################################
