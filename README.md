@@ -31,7 +31,7 @@ for commonly required tasks, and aims to save developers' effort.
 * Database Support
     * MySQL
     * SQLite
-    * MongoDB (In progress)
+    * MongoDB (incomplete)
 * Mail
 * Migrations (Powered by `Flask-Migrate`)
 * Deployment
@@ -55,12 +55,15 @@ for commonly required tasks, and aims to save developers' effort.
 
 ## Setup
 
-Getting started with the basic application is straightforward. Install the requirements from
-the `requirements.txt`,
+Getting started with the basic application is straightforward.
 
-`pip3 install -r requirements.txt`
+* Install the requirements from the `requirements.txt`,
 
-Copy `settings.sample.py` to `settings.py` and update it as required.
+```console
+$ pip3 install -r requirements.txt
+```
+
+* Copy `settings.sample.py` to `settings.py` and update it as required.
 
 Most of the settings can also be specified through environment variables.
 There are inline explanations in the settings file if the variables are not self-explanatory.
@@ -69,13 +72,16 @@ There are inline explanations in the settings file if the variables are not self
 
 Run the application using,
 
-`python server.py`
+````console
+$ python server.py
+````
 
 OR
 
-`export FLASK_APP="server:webapp"`
-
-`flask run`
+```
+$ export FLASK_APP="server:webapp"
+$ flask run
+```
 
 (Other WSGI-based deployments are also possible. e.g. `gunicorn`)
 
