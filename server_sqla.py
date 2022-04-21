@@ -98,6 +98,7 @@ def uia_username_mapper(identity):
 
 webapp = Flask(app.name, static_folder="static")
 webapp.config["DEBUG"] = app.debug
+webapp.url_map.strict_slashes = False
 
 webapp.config["SECRET_KEY"] = app.secret_key
 webapp.config["SECURITY_PASSWORD_SALT"] = app.security_password_salt
@@ -246,7 +247,7 @@ def inject_global_constants():
 # Views
 
 
-@webapp.route("/admin", strict_slashes=False)
+@webapp.route("/admin")
 @permissions_required("view_acp")
 @auth_required()
 def show_admin():
@@ -273,7 +274,7 @@ def show_admin():
     return render_template("admin.html", data=data)
 
 
-@webapp.route("/settings", strict_slashes=False)
+@webapp.route("/settings")
 @permissions_required("view_ucp")
 @auth_required()
 def show_settings():
@@ -282,7 +283,7 @@ def show_settings():
     return render_template("settings.html", data=data)
 
 
-@webapp.route("/", strict_slashes=False)
+@webapp.route("/")
 @auth_required()
 def show_home():
     data = {}
@@ -293,7 +294,7 @@ def show_home():
 ###############################################################################
 
 
-@webapp.route("/action", methods=["POST"], strict_slashes=False)
+@webapp.route("/action", methods=["POST"])
 @auth_required()
 def action():
     status = False
