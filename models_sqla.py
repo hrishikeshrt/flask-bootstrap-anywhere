@@ -15,7 +15,9 @@ from sqlalchemy.ext.mutable import MutableList
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import UserMixin, RoleMixin, SQLAlchemyUserDatastore, AsaList
-from flask_security.forms import LoginForm, RegisterForm, StringField, Required
+from flask_security.forms import LoginForm, StringField, Required
+from flask_security.utils import lookup_identity
+
 
 ###############################################################################
 # Create database connection object
@@ -72,21 +74,21 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 ###############################################################################
 
 
-class CustomRegisterForm(RegisterForm):
-    username = StringField('Username', [Required()])
-
-    def validate(self):
-        if user_datastore.find_user(username=self.username.data):
-            self.username.errors = ["Username already taken"]
-            return False
-
-        if not super(CustomRegisterForm, self).validate():
-            return False
-
-        return True
-
-
 class CustomLoginForm(LoginForm):
-    email = StringField('Username or Email', [Required()])
+    email = StringField('Username or Email', validators=[Required()])
+
+    def validate(self, **kwargs) -> bool:
+        self.user = lookup_identity(self.email.data)
+        if self.user is None:
+            self.email.errors = ["Invalid username or email"]
+            return False
+
+        self.ifield = self.email
+        # NOTE: setting username data is a temporary solution for a bug which
+        # might be fixed in the later versions of Flask-Security-Too
+        # Ref: https://github.com/Flask-Middleware/flask-security/issues/732
+        self.username.data = self.user.username
+        return super().validate(**kwargs)
+
 
 ###############################################################################

@@ -6,6 +6,7 @@ Flask_Mail>=0.9.1
 Flask_Migrate>=4.0.0
 
 bcrypt>=4.0.1
+bleach>=6.0.0
 
 SQLAlchemy>=1.4.25
 Flask_SQLAlchemy>=2.4.4

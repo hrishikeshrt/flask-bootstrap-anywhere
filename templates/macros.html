@@ -1,6 +1,12 @@
 {% macro render_field_with_errors(field) %}
     {{ field.label }} {{ field(**kwargs)|safe }}
-    {{ render_field_errors(field) }}
+    {% if field.errors %}
+    <ul class="list-unstyled">
+      {% for error in field.errors %}
+      <li class="p-1 small font-weight-bold text-danger">{{error}}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
 {% endmacro %}
 
 {% macro render_field(field) %}
@@ -15,4 +21,15 @@
         {% endfor %}
         </ul>
     {% endif %}
+{% endmacro %}
+
+{# render WTForms (>3.0) form level errors #}
+{% macro render_form_errors(form) %}
+  {% if form.form_errors %}
+    <ul class="list-unstyled">
+    {% for error in form.form_errors %}
+      <li class="p-1 small font-weight-bold text-danger">{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
 {% endmacro %}
