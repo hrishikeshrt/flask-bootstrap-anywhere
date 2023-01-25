@@ -8,15 +8,31 @@ Created on Sat Feb 06 19:55:04 2021
 
 ###############################################################################
 
+import sqlite3
 from sqlalchemy import (Column, Integer, String, Boolean, DateTime, JSON,
-                        ForeignKey)
+                        ForeignKey, event)
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.ext.mutable import MutableList
+from sqlalchemy.engine import Engine
+
 
 from flask_sqlalchemy import SQLAlchemy
-from flask_security import UserMixin, RoleMixin, SQLAlchemyUserDatastore, AsaList
+from flask_security import UserMixin, RoleMixin, SQLAlchemyUserDatastore
+from flask_security import AsaList
+from sqlalchemy.ext.mutable import MutableList
 from flask_security.forms import LoginForm, StringField, Required
 from flask_security.utils import lookup_identity
+
+###############################################################################
+# Foreign Key Support for SQLite3
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if type(dbapi_connection) is sqlite3.Connection:
+        # play well with other database backends
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 ###############################################################################
