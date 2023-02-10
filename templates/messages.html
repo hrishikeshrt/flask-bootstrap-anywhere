@@ -2,11 +2,13 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
 <div class="container pb-0 pt-3 lead">
+  {% set category_alert_class = {
+    'message': 'info',
+    'error': 'danger'
+  }-%}
   {% for category, message in messages %}
-  {% if category == 'message' %}
-  {% set category = 'warning' %}
-  {% endif %}
-  <div class="alert alert-{{ category }} alert-dismissible text-center" role="alert">
+  {% set alert_class = category_alert_class[category] | default(category) %}
+  <div class="alert alert-{{ alert_class }} alert-dismissible text-center" role="alert">
     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
         aria-hidden="true">&times;</span></button>
     {{ message }}
